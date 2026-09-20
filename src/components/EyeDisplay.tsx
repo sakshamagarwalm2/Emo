@@ -68,7 +68,7 @@ export const EyeDisplay: React.FC = () => {
         return () => clearInterval(blinkInterval);
 
       case 'happy':
-        // EVE Happy: Upward curved crescent eyes (^ ^)
+        // EVE Happy: Both eyes curved upward crescents (^ ^)
         eyeRy.value = withSpring(34, SPRING_CONFIG);
         eyeRx.value = withSpring(64, SPRING_CONFIG);
         eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
@@ -79,28 +79,37 @@ export const EyeDisplay: React.FC = () => {
         auraColor.value = '#00838F';
         break;
 
-      case 'irritated':
-        // Redesigned Irritated: Sharp inward-angled flat brow slits (\ /) with fierce orange-red glow
-        eyeRy.value = withSpring(18, SPRING_CONFIG);
-        eyeRx.value = withSpring(78, SPRING_CONFIG);
-        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
-        eyeTranslateY.value = withSpring(6, SPRING_CONFIG);
-        leftAngle.value = withSpring(-18, SPRING_CONFIG); // Sharp inward angry brow slant
-        rightAngle.value = withSpring(18, SPRING_CONFIG);  // Sharp inward angry brow slant
-        coreColor.value = '#FF3D00'; // Deep Red-Orange
-        auraColor.value = '#D50000';
+      case 'ignoring':
+        // Teasing / Winking: Left eye winks into a smiling crescent (^), right eye stays open/smiling
+        eyeRy.value = withSpring(40, SPRING_CONFIG);
+        eyeRx.value = withSpring(64, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(12, SPRING_CONFIG); // Playful glance
+        eyeTranslateY.value = withSpring(-4, SPRING_CONFIG);
+        leftAngle.value = withSpring(0, SPRING_CONFIG);
+        rightAngle.value = withSpring(-8, SPRING_CONFIG);
+        coreColor.value = '#00E5FF';
+        auraColor.value = '#0288D1';
         break;
 
-      case 'ignoring':
-        // Redesigned Ignoring: Half-closed bored eyes shifted far to upper-right corner looking away
-        eyeRy.value = withSpring(16, SPRING_CONFIG);       // Thin bored half-closed slit
+      case 'stressed':
+      case 'irritated':
+        // Redesigned Stressed & Irritated: Universal Relatable (X O) Eyes!
+        eyeRy.value = withSpring(54, SPRING_CONFIG);
         eyeRx.value = withSpring(54, SPRING_CONFIG);
-        eyeTranslateX.value = withSpring(52, SPRING_CONFIG);  // Turned far right
-        eyeTranslateY.value = withSpring(-28, SPRING_CONFIG); // Turned far up
-        leftAngle.value = withSpring(-12, SPRING_CONFIG);
-        rightAngle.value = withSpring(-12, SPRING_CONFIG);
-        coreColor.value = '#78909C'; // Dismissive Cool Silver
-        auraColor.value = '#37474F';
+        leftAngle.value = withSpring(0, SPRING_CONFIG);
+        rightAngle.value = withSpring(0, SPRING_CONFIG);
+        coreColor.value = '#FF9800'; // Panicked Orange
+        auraColor.value = '#E65100';
+
+        // Micro tremble shake
+        eyeTranslateX.value = withRepeat(
+          withSequence(
+            withTiming(4, { duration: 45 }),
+            withTiming(-4, { duration: 45 })
+          ),
+          -1,
+          true
+        );
         break;
 
       case 'thinking':
@@ -132,24 +141,6 @@ export const EyeDisplay: React.FC = () => {
         rightAngle.value = withSpring(-18, SPRING_CONFIG);
         coreColor.value = '#FFC107'; // Amber Alert
         auraColor.value = '#FF8F00';
-        break;
-
-      case 'stressed':
-        eyeRy.value = withSpring(16, SPRING_CONFIG);
-        eyeRx.value = withSpring(82, SPRING_CONFIG);
-        leftAngle.value = withSpring(15, SPRING_CONFIG);
-        rightAngle.value = withSpring(-15, SPRING_CONFIG);
-        coreColor.value = '#FF9800'; // Panicked Orange
-        auraColor.value = '#E65100';
-
-        eyeTranslateX.value = withRepeat(
-          withSequence(
-            withTiming(5, { duration: 45 }),
-            withTiming(-5, { duration: 45 })
-          ),
-          -1,
-          true
-        );
         break;
 
       case 'error':
@@ -195,11 +186,10 @@ export const EyeDisplay: React.FC = () => {
     const states: EmoEmotion[] = [
       'idle',
       'happy',
+      'ignoring',
+      'stressed',
       'thinking',
       'alert',
-      'stressed',
-      'irritated',
-      'ignoring',
       'error',
     ];
     const nextIdx = (states.indexOf(emotion) + 1) % states.length;
@@ -231,12 +221,22 @@ export const EyeDisplay: React.FC = () => {
             {/* Left Eye */}
             <AnimatedG animatedProps={leftGroupProps}>
               <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowLeft)" opacity={0.35} />
-              {emotion === 'happy' ? (
-                // EVE Iconic Happy Crescent Path (^ ^)
+              {emotion === 'happy' || emotion === 'ignoring' ? (
+                // Happy Crescent / Teasing Wink (^ Eye)
                 <Path
                   d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
                   fill="url(#eveGlowLeft)"
                 />
+              ) : emotion === 'stressed' || emotion === 'irritated' ? (
+                // Relatable 'X' Eye for Stressed/Irritated
+                <G>
+                  <Path
+                    d="M -32,-32 L 32,32 M 32,-32 L -32,32"
+                    stroke={coreColor.value}
+                    strokeWidth="16"
+                    strokeLinecap="round"
+                  />
+                </G>
               ) : (
                 <AnimatedEllipse cx="0" cy="0" animatedProps={leftEyeProps} fill="url(#eveGlowLeft)" />
               )}
@@ -246,11 +246,16 @@ export const EyeDisplay: React.FC = () => {
             <AnimatedG animatedProps={rightGroupProps}>
               <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowRight)" opacity={0.35} />
               {emotion === 'happy' ? (
-                // EVE Iconic Happy Crescent Path (^ ^)
+                // Happy Crescent (^ Eye)
                 <Path
                   d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
                   fill="url(#eveGlowRight)"
                 />
+              ) : emotion === 'stressed' || emotion === 'irritated' ? (
+                // Relatable 'O' Ring Eye for Stressed/Irritated
+                <G>
+                  <AnimatedEllipse cx="0" cy="0" rx="38" ry="38" fill="none" stroke={coreColor.value} strokeWidth="16" />
+                </G>
               ) : (
                 <AnimatedEllipse cx="0" cy="0" animatedProps={rightEyeProps} fill="url(#eveGlowRight)" />
               )}
