@@ -117,13 +117,5 @@ adb shell am start -n com.emo/.MainActivity
 
 ---
 
-## 6. Optimization Principles (Ponytail Rules)
-This codebase follows **Ponytail** engineering guidelines:
-- **YAGNI:** Zero unrequested abstractions or unnecessary dependencies.
-- **Native Platform First:** Direct React Native Reanimated SVG & native Android intents over heavy external animation/AV engines.
-- **AMOLED Safety:** Absolute black background `#000000` to eliminate screen burn-in and minimize battery draw.
-
----
-
-## 7. License
+## 6. License
 Distributed under the [MIT License](LICENSE). Copyright (c) 2026 sakshamagarwalm2.
