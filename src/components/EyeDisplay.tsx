@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Ellipse, Path, Defs, RadialGradient, Stop, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -26,6 +26,7 @@ export const EyeDisplay: React.FC = () => {
   const emotion = useEmoStore((state) => state.emotion);
   const setEmotion = useEmoStore((state) => state.setEmotion);
   const [showStandbyClock, setShowStandbyClock] = useState<boolean>(false);
+  const [isSpotifyReact, setIsSpotifyReact] = useState<boolean>(false);
 
   // Shared Animation Values
   const eyeRy = useSharedValue(42);         // Vertical radius
@@ -68,22 +69,28 @@ export const EyeDisplay: React.FC = () => {
         return () => clearInterval(blinkInterval);
 
       case 'happy':
-        // EVE Happy: Both eyes curved upward crescents (^ ^)
+        // EVE Happy YES Nodding: Upward crescents (^ ^) nodding up and down
         eyeRy.value = withSpring(34, SPRING_CONFIG);
         eyeRx.value = withSpring(64, SPRING_CONFIG);
-        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
-        eyeTranslateY.value = withSpring(-4, SPRING_CONFIG);
         leftAngle.value = withSpring(0, SPRING_CONFIG);
         rightAngle.value = withSpring(0, SPRING_CONFIG);
         coreColor.value = '#00E5FF';
         auraColor.value = '#00838F';
+
+        // Nodding YES Up & Down Sequence
+        eyeTranslateY.value = withSequence(
+          withTiming(-14, { duration: 180 }),
+          withTiming(14, { duration: 180 }),
+          withTiming(-10, { duration: 160 }),
+          withTiming(0, { duration: 160 })
+        );
         break;
 
       case 'ignoring':
-        // Teasing / Winking: Left eye winks into a smiling crescent (^), right eye stays open/smiling
+        // Teasing / Winking: Left eye winks happy arc (^), right eye stays open
         eyeRy.value = withSpring(40, SPRING_CONFIG);
         eyeRx.value = withSpring(64, SPRING_CONFIG);
-        eyeTranslateX.value = withSpring(12, SPRING_CONFIG); // Playful glance
+        eyeTranslateX.value = withSpring(12, SPRING_CONFIG);
         eyeTranslateY.value = withSpring(-4, SPRING_CONFIG);
         leftAngle.value = withSpring(0, SPRING_CONFIG);
         rightAngle.value = withSpring(-8, SPRING_CONFIG);
@@ -93,7 +100,7 @@ export const EyeDisplay: React.FC = () => {
 
       case 'stressed':
       case 'irritated':
-        // Redesigned Stressed & Irritated: Universal Relatable (X O) Eyes!
+        // Relatable (X O) Eyes with NO Side-to-Side Shake
         eyeRy.value = withSpring(54, SPRING_CONFIG);
         eyeRx.value = withSpring(54, SPRING_CONFIG);
         leftAngle.value = withSpring(0, SPRING_CONFIG);
@@ -101,14 +108,13 @@ export const EyeDisplay: React.FC = () => {
         coreColor.value = '#FF9800'; // Panicked Orange
         auraColor.value = '#E65100';
 
-        // Micro tremble shake
-        eyeTranslateX.value = withRepeat(
-          withSequence(
-            withTiming(4, { duration: 45 }),
-            withTiming(-4, { duration: 45 })
-          ),
-          -1,
-          true
+        // Shaking NO Side-to-Side Sequence
+        eyeTranslateX.value = withSequence(
+          withTiming(-18, { duration: 140 }),
+          withTiming(18, { duration: 140 }),
+          withTiming(-14, { duration: 140 }),
+          withTiming(14, { duration: 140 }),
+          withTiming(0, { duration: 140 })
         );
         break;
 
@@ -198,6 +204,7 @@ export const EyeDisplay: React.FC = () => {
 
   return (
     <View style={styles.fullScreenContainer}>
+      {/* Standby Desk Clock View OR EVE Glowing Eye View */}
       {showStandbyClock ? (
         <StandbyClock />
       ) : (
@@ -222,13 +229,11 @@ export const EyeDisplay: React.FC = () => {
             <AnimatedG animatedProps={leftGroupProps}>
               <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowLeft)" opacity={0.35} />
               {emotion === 'happy' || emotion === 'ignoring' ? (
-                // Happy Crescent / Teasing Wink (^ Eye)
                 <Path
                   d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
                   fill="url(#eveGlowLeft)"
                 />
               ) : emotion === 'stressed' || emotion === 'irritated' ? (
-                // Relatable 'X' Eye for Stressed/Irritated
                 <G>
                   <Path
                     d="M -32,-32 L 32,32 M 32,-32 L -32,32"
@@ -246,13 +251,11 @@ export const EyeDisplay: React.FC = () => {
             <AnimatedG animatedProps={rightGroupProps}>
               <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowRight)" opacity={0.35} />
               {emotion === 'happy' ? (
-                // Happy Crescent (^ Eye)
                 <Path
                   d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
                   fill="url(#eveGlowRight)"
                 />
               ) : emotion === 'stressed' || emotion === 'irritated' ? (
-                // Relatable 'O' Ring Eye for Stressed/Irritated
                 <G>
                   <AnimatedEllipse cx="0" cy="0" rx="38" ry="38" fill="none" stroke={coreColor.value} strokeWidth="16" />
                 </G>
@@ -264,13 +267,22 @@ export const EyeDisplay: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      {/* Bottom Right Corner Small Dot Mode Switch Button */}
+      {/* Bottom Left Corner Spotify Logo Audio React Button */}
       <TouchableOpacity
-        style={styles.bottomRightDotButton}
-        onPress={() => setShowStandbyClock((prev) => !prev)}
-        activeOpacity={0.6}
+        style={styles.bottomLeftSpotifyButton}
+        onPress={() => setIsSpotifyReact((prev) => !prev)}
+        activeOpacity={0.7}
       >
-        <View style={[styles.dotIndicator, showStandbyClock && styles.dotActive]} />
+        <Text style={[styles.spotifyLogoIcon, isSpotifyReact && styles.spotifyActive]}></Text>
+      </TouchableOpacity>
+
+      {/* Bottom Right Corner Sci-Fi Tech Symbol Mode Switch Button */}
+      <TouchableOpacity
+        style={styles.bottomRightSciFiButton}
+        onPress={() => setShowStandbyClock((prev) => !prev)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.sciFiSymbolIcon, showStandbyClock && styles.sciFiActive]}>✦</Text>
       </TouchableOpacity>
     </View>
   );
@@ -290,20 +302,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottomRightDotButton: {
+  bottomLeftSpotifyButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    padding: 12,
+    bottom: 24,
+    left: 24,
+    padding: 10,
     zIndex: 99,
   },
-  dotIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#333333',
+  spotifyLogoIcon: {
+    color: '#1DB954', // Spotify Green
+    fontSize: 22,
+    fontWeight: '900',
   },
-  dotActive: {
-    backgroundColor: '#00E5FF',
+  spotifyActive: {
+    color: '#1ED760',
+    textShadowColor: '#1DB954',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  bottomRightSciFiButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    padding: 10,
+    zIndex: 99,
+  },
+  sciFiSymbolIcon: {
+    color: '#444444',
+    fontSize: 24,
+    fontWeight: '300',
+  },
+  sciFiActive: {
+    color: '#00E5FF',
+    textShadowColor: '#00E5FF',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
 });

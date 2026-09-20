@@ -14,7 +14,7 @@ export const StandbyClock: React.FC = () => {
         now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
       );
       setDateStr(
-        now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+        now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
       );
     };
 
@@ -24,51 +24,119 @@ export const StandbyClock: React.FC = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.clockText}>{timeStr}</Text>
-      <Text style={styles.dateText}>{dateStr}</Text>
-
-      {activeNotifications.length > 0 && (
-        <View style={styles.badgeContainer}>
-          <Text style={styles.badgeText}>
-            ● {activeNotifications.length} Active Agent Event{activeNotifications.length > 1 ? 's' : ''}
-          </Text>
+    <View style={styles.standbyContainer}>
+      {/* iOS Standby-Inspired Dual Horizontal Layout */}
+      <View style={styles.horizontalRow}>
+        
+        {/* Left Column: Massive Horizontal Time Readout */}
+        <View style={styles.timeColumn}>
+          <Text style={styles.giantClockText}>{timeStr}</Text>
+          <Text style={styles.dateBadgeText}>{dateStr.toUpperCase()}</Text>
         </View>
-      )}
+
+        {/* Vertical Divider Line */}
+        <View style={styles.verticalDivider} />
+
+        {/* Right Column: Status Cards & Agent Counter */}
+        <View style={styles.widgetColumn}>
+          <View style={styles.statusPill}>
+            <Text style={styles.statusPillText}>⚡ 98% • CONNECTED TO POWER</Text>
+          </View>
+
+          <View style={styles.agentCard}>
+            <Text style={styles.agentCardHeader}>EMO AGENT MONITOR</Text>
+            <Text style={styles.agentCardBody}>
+              {activeNotifications.length > 0
+                ? `${activeNotifications.length} Active Event${activeNotifications.length > 1 ? 's' : ''}`
+                : 'All Systems Nominal • Standby'}
+            </Text>
+          </View>
+        </View>
+
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  standbyContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    paddingHorizontal: 24,
   },
-  clockText: {
+  horizontalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 680,
+  },
+  timeColumn: {
+    flex: 1.2,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  giantClockText: {
     color: '#FFFFFF',
-    fontSize: 54,
-    fontWeight: '300',
-    letterSpacing: 2,
+    fontSize: 82,
+    fontWeight: '200',
+    letterSpacing: -2,
+    lineHeight: 90,
   },
-  dateText: {
-    color: '#888888',
-    fontSize: 16,
-    marginTop: 4,
-    textTransform: 'uppercase',
-  },
-  badgeContainer: {
-    marginTop: 12,
-    backgroundColor: '#1E1E1E',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  badgeText: {
+  dateBadgeText: {
     color: '#00E5FF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: 6,
+  },
+  verticalDivider: {
+    width: 1,
+    height: 100,
+    backgroundColor: '#222222',
+    marginHorizontal: 24,
+  },
+  widgetColumn: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 12,
+  },
+  statusPill: {
+    backgroundColor: '#121212',
+    borderColor: '#262626',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  statusPillText: {
+    color: '#888888',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  agentCard: {
+    backgroundColor: '#121212',
+    borderColor: '#262626',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  agentCardHeader: {
+    color: '#00E5FF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  agentCardBody: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
