@@ -16,7 +16,6 @@ import { StandbyClock } from './StandbyClock';
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-// Spring physics config for Pixar/EVE character fluid movement
 const SPRING_CONFIG = {
   damping: 14,
   stiffness: 110,
@@ -28,7 +27,7 @@ export const EyeDisplay: React.FC = () => {
   const setEmotion = useEmoStore((state) => state.setEmotion);
   const [showStandbyClock, setShowStandbyClock] = useState<boolean>(false);
 
-  // Shared Animation Values using Reanimated Physics
+  // Shared Animation Values
   const eyeRy = useSharedValue(42);         // Vertical radius
   const eyeRx = useSharedValue(70);         // Horizontal radius
   const eyeTranslateX = useSharedValue(0);  // Horizontal glance offset
@@ -52,14 +51,13 @@ export const EyeDisplay: React.FC = () => {
         coreColor.value = '#29B6F6';
         auraColor.value = '#0288D1';
 
-        // Organic Spring Blink Loop
         const blinkInterval = setInterval(() => {
           eyeRy.value = withSequence(
             withTiming(2, { duration: 80, easing: Easing.quad }),
             withSpring(42, SPRING_CONFIG)
           );
 
-          if (Math.random() > 0.4) {
+          if (Math.random() > 0.45) {
             const randomX = (Math.random() - 0.5) * 26;
             const randomY = (Math.random() - 0.5) * 12;
             eyeTranslateX.value = withSpring(randomX, SPRING_CONFIG);
@@ -70,20 +68,46 @@ export const EyeDisplay: React.FC = () => {
         return () => clearInterval(blinkInterval);
 
       case 'happy':
-        // EVE Happy: Upward curved crescent eyes with spring bounce
+        // EVE Happy: Upward curved crescent eyes (^ ^)
         eyeRy.value = withSpring(34, SPRING_CONFIG);
         eyeRx.value = withSpring(64, SPRING_CONFIG);
         eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
         eyeTranslateY.value = withSpring(-4, SPRING_CONFIG);
         leftAngle.value = withSpring(0, SPRING_CONFIG);
         rightAngle.value = withSpring(0, SPRING_CONFIG);
-        coreColor.value = '#00E5FF'; // EVE Glowing Cyan
+        coreColor.value = '#00E5FF';
         auraColor.value = '#00838F';
+        break;
+
+      case 'irritated':
+        // Redesigned Irritated: Sharp inward-angled flat brow slits (\ /) with fierce orange-red glow
+        eyeRy.value = withSpring(18, SPRING_CONFIG);
+        eyeRx.value = withSpring(78, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
+        eyeTranslateY.value = withSpring(6, SPRING_CONFIG);
+        leftAngle.value = withSpring(-18, SPRING_CONFIG); // Sharp inward angry brow slant
+        rightAngle.value = withSpring(18, SPRING_CONFIG);  // Sharp inward angry brow slant
+        coreColor.value = '#FF3D00'; // Deep Red-Orange
+        auraColor.value = '#D50000';
+        break;
+
+      case 'ignoring':
+        // Redesigned Ignoring: Half-closed bored eyes shifted far to upper-right corner looking away
+        eyeRy.value = withSpring(16, SPRING_CONFIG);       // Thin bored half-closed slit
+        eyeRx.value = withSpring(54, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(52, SPRING_CONFIG);  // Turned far right
+        eyeTranslateY.value = withSpring(-28, SPRING_CONFIG); // Turned far up
+        leftAngle.value = withSpring(-12, SPRING_CONFIG);
+        rightAngle.value = withSpring(-12, SPRING_CONFIG);
+        coreColor.value = '#78909C'; // Dismissive Cool Silver
+        auraColor.value = '#37474F';
         break;
 
       case 'thinking':
         eyeRy.value = withSpring(22, SPRING_CONFIG);
         eyeRx.value = withSpring(76, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
+        eyeTranslateY.value = withSpring(0, SPRING_CONFIG);
         leftAngle.value = withSpring(4, SPRING_CONFIG);
         rightAngle.value = withSpring(-4, SPRING_CONFIG);
         coreColor.value = '#00E5FF';
@@ -102,6 +126,8 @@ export const EyeDisplay: React.FC = () => {
       case 'alert':
         eyeRy.value = withSpring(58, SPRING_CONFIG);
         eyeRx.value = withSpring(74, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
+        eyeTranslateY.value = withSpring(0, SPRING_CONFIG);
         leftAngle.value = withSpring(18, SPRING_CONFIG);
         rightAngle.value = withSpring(-18, SPRING_CONFIG);
         coreColor.value = '#FFC107'; // Amber Alert
@@ -116,7 +142,6 @@ export const EyeDisplay: React.FC = () => {
         coreColor.value = '#FF9800'; // Panicked Orange
         auraColor.value = '#E65100';
 
-        // Fast micro tremble shake
         eyeTranslateX.value = withRepeat(
           withSequence(
             withTiming(5, { duration: 45 }),
@@ -127,29 +152,11 @@ export const EyeDisplay: React.FC = () => {
         );
         break;
 
-      case 'irritated':
-        eyeRy.value = withSpring(20, SPRING_CONFIG);
-        eyeRx.value = withSpring(72, SPRING_CONFIG);
-        leftAngle.value = withSpring(24, SPRING_CONFIG);
-        rightAngle.value = withSpring(24, SPRING_CONFIG); // Annoyed parallel slant
-        coreColor.value = '#FF3D00'; // Deep Red-Orange
-        auraColor.value = '#BF360C';
-        break;
-
-      case 'ignoring':
-        eyeRy.value = withSpring(32, SPRING_CONFIG);
-        eyeRx.value = withSpring(56, SPRING_CONFIG);
-        eyeTranslateX.value = withSpring(44, SPRING_CONFIG);  // Looking away
-        eyeTranslateY.value = withSpring(-24, SPRING_CONFIG); // Looking up
-        leftAngle.value = withSpring(-6, SPRING_CONFIG);
-        rightAngle.value = withSpring(6, SPRING_CONFIG);
-        coreColor.value = '#B0BEC5'; // Silver-blue
-        auraColor.value = '#546E7A';
-        break;
-
       case 'error':
         eyeRy.value = withSpring(26, SPRING_CONFIG);
         eyeRx.value = withSpring(80, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
+        eyeTranslateY.value = withSpring(0, SPRING_CONFIG);
         leftAngle.value = withSpring(28, SPRING_CONFIG);
         rightAngle.value = withSpring(-28, SPRING_CONFIG);
         coreColor.value = '#FF5252'; // Crimson
@@ -201,7 +208,6 @@ export const EyeDisplay: React.FC = () => {
 
   return (
     <View style={styles.fullScreenContainer}>
-      {/* Standby Desk Clock View OR EVE Glowing Eye View */}
       {showStandbyClock ? (
         <StandbyClock />
       ) : (
