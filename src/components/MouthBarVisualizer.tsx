@@ -11,21 +11,21 @@ export interface MouthBarVisualizerProps {
   minHeight?: number;
   maxHeight?: number;
   isAudioReactive?: boolean;
+  micAmplitude?: number; // Live audio amplitude (0.0 = silence/below noise gate, > 0.0 = active speech)
 }
 
 /**
  * MouthBarVisualizer: ElevenLabs UI Bar Visualizer adapted for Project EMO.
- * Positioned centered at the bottom between Spotify logo and Sci-Fi button.
- * Acts as EMO's glowing digital mouth, dynamically matching eye color and voice reactivity states!
+ * Dynamically scales to active speech levels, ignoring background noise below noise gate.
  */
 export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
   state = 'idle',
   barCount = 15,
   color = '#00E5FF',
-  centerAlign = true,
-  minHeight = 6,
+  minHeight = 5,
   maxHeight = 52,
   isAudioReactive = false,
+  micAmplitude = 0,
 }) => {
   const animatedValues = useRef<Animated.Value[]>(
     Array.from({ length: barCount }, () => new Animated.Value(minHeight))
@@ -36,31 +36,31 @@ export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
 
     const animateBars = () => {
       const animations = animatedValues.map((anim, i) => {
-        // Compute center weight (bell curve shape like a mouth)
         const center = (barCount - 1) / 2;
         const distFromCenter = Math.abs(i - center);
-        const centerFactor = Math.max(0.2, 1 - (distFromCenter / center) * 0.7);
+        const centerFactor = Math.max(0.25, 1 - (distFromCenter / center) * 0.65);
 
         let targetVal = minHeight;
 
-        if (state === 'speaking' || isAudioReactive) {
+        // If active speech is detected above noise gate threshold (micAmplitude > 0)
+        if ((state === 'speaking' || isAudioReactive) && micAmplitude > 0) {
+          const speechPower = micAmplitude * (maxHeight - minHeight);
+          const randVariation = (Math.random() * 0.4 + 0.8);
+          targetVal = minHeight + speechPower * centerFactor * randVariation;
+        } else if (state === 'speaking') {
           const randVal = Math.random() * (maxHeight - minHeight) + minHeight;
           targetVal = minHeight + (randVal - minHeight) * centerFactor;
-        } else if (state === 'listening') {
-          const pulse = Math.sin(Date.now() / 200 + i * 0.5) * 0.5 + 0.5;
-          targetVal = minHeight + (maxHeight * 0.45 - minHeight) * pulse * centerFactor;
         } else if (state === 'thinking') {
           const wave = Math.sin(Date.now() / 150 - i * 0.6) * 0.5 + 0.5;
           targetVal = minHeight + (maxHeight * 0.65 - minHeight) * wave;
         } else {
-          // Idle state: subtle quiet resting mouth
-          const quietPulse = Math.sin(Date.now() / 600 + i) * 0.2 + 0.2;
-          targetVal = minHeight + quietPulse * 4;
+          // Below noise gate / quiet state: flat resting line
+          targetVal = minHeight;
         }
 
         return Animated.timing(anim, {
           toValue: targetVal,
-          duration: state === 'speaking' || isAudioReactive ? 90 : 180,
+          duration: micAmplitude > 0 ? 80 : 150,
           useNativeDriver: false,
         });
       });
@@ -80,7 +80,7 @@ export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
         animLoop.stop();
       }
     };
-  }, [state, barCount, minHeight, maxHeight, isAudioReactive]);
+  }, [state, barCount, minHeight, maxHeight, isAudioReactive, micAmplitude]);
 
   return (
     <View style={styles.container}>
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   bar: {
-    width: 5.5,
-    marginHorizontal: 3,
+    width: 6,
+    marginHorizontal: 3.5,
     borderRadius: 3,
   },
 });

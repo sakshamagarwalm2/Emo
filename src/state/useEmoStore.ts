@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { HapticService } from '../services/HapticService';
+import { TTSService } from '../services/TTSService';
 
 export type EmoEmotion =
   | 'idle'
@@ -30,7 +32,21 @@ export interface AgentNotification {
 }
 
 let autoResetTimer: ReturnType<typeof setTimeout> | null = null;
-const IDLE_RESET_DELAY_MS = 4500; // 4.5 seconds auto-return to idle
+let feelIgnoredTimer: ReturnType<typeof setTimeout> | null = null;
+const IDLE_RESET_DELAY_MS = 4500;
+const IGNORED_SPONTANEOUS_MS = 14000; // 14s silence -> feel ignored reaction
+
+const EMOTION_SPOKEN_PHRASES: Record<EmoEmotion, string> = {
+  idle: '',
+  thinking: '',
+  happy: 'Yay! I am so happy!',
+  concerned: 'Is everything alright with you?',
+  ignoring: 'Hey... are you ignoring me?',
+  stressed: 'Whew... so much going on!',
+  irritated: 'Grr... that is so annoying!',
+  alert: 'Attention! Event detected!',
+  error: 'Oops! Something went wrong!',
+};
 
 interface EmoStoreState {
   mode: EmoMode;
@@ -39,22 +55,26 @@ interface EmoStoreState {
   chatMessages: ChatMessage[];
   isLLMBusy: boolean;
   eyeScale: number;
+  currentCaption: string | null;
 
   // Actions
   setMode: (mode: EmoMode) => void;
-  setEmotion: (emotion: EmoEmotion, autoReset?: boolean) => void;
+  setEmotion: (emotion: EmoEmotion, autoReset?: boolean, customPhrase?: string) => void;
+  setCaption: (caption: string | null) => void;
   setEyeScale: (scale: number) => void;
   addNotification: (notification: AgentNotification) => void;
   clearNotification: (agentId: string) => void;
   addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   clearChat: () => void;
   setLLMBusy: (busy: boolean) => void;
+  resetIgnoredTimer: () => void;
 }
 
 export const useEmoStore = create<EmoStoreState>((set, get) => ({
   mode: 'standby',
   emotion: 'idle',
   activeNotifications: [],
+  currentCaption: null,
   chatMessages: [
     {
       id: 'welcome-0',
@@ -69,8 +89,12 @@ export const useEmoStore = create<EmoStoreState>((set, get) => ({
 
   setMode: (mode) => set({ mode }),
 
-  setEmotion: (emotion: EmoEmotion, autoReset: boolean = true) => {
-    // Clear any existing reset timer
+  setCaption: (currentCaption) => set({ currentCaption }),
+
+  setEmotion: (emotion: EmoEmotion, autoReset: boolean = true, customPhrase?: string) => {
+    // Trigger native haptic vibration signature for emotion
+    HapticService.getInstance().triggerEmotionHaptics(emotion);
+
     if (autoResetTimer) {
       clearTimeout(autoResetTimer);
       autoResetTimer = null;
@@ -78,13 +102,47 @@ export const useEmoStore = create<EmoStoreState>((set, get) => ({
 
     set({ emotion });
 
-    // Automatically return to 'idle' after 4.5 seconds if emotion is not idle
+    // Speak phrase and stream line-by-line captions ONLY when emotion phrase exists
+    const spokenText = customPhrase !== undefined ? customPhrase : EMOTION_SPOKEN_PHRASES[emotion];
+    
+    if (spokenText) {
+      TTSService.getInstance().speakWithCaptions(
+        spokenText,
+        (chunk) => {
+          set({ currentCaption: chunk });
+        },
+        3
+      );
+    } else {
+      TTSService.getInstance().stop();
+      set({ currentCaption: null });
+    }
+
+    // Reset spontaneous ignored timer
+    get().resetIgnoredTimer();
+
+    // Automatically return to 'idle' after IDLE_RESET_DELAY_MS if not idle
     if (autoReset && emotion !== 'idle') {
       autoResetTimer = setTimeout(() => {
-        set({ emotion: 'idle' });
-        autoResetTimer = null;
+        set({ emotion: 'idle', currentCaption: null });
       }, IDLE_RESET_DELAY_MS);
     }
+  },
+
+  resetIgnoredTimer: () => {
+    if (feelIgnoredTimer) {
+      clearTimeout(feelIgnoredTimer);
+      feelIgnoredTimer = null;
+    }
+
+    feelIgnoredTimer = setTimeout(() => {
+      const state = get();
+      if (state.emotion === 'idle') {
+        const spontaneousEmotions: EmoEmotion[] = ['ignoring', 'concerned', 'stressed'];
+        const randomEm = spontaneousEmotions[Math.floor(Math.random() * spontaneousEmotions.length)];
+        get().setEmotion(randomEm, true);
+      }
+    }, IGNORED_SPONTANEOUS_MS);
   },
 
   setEyeScale: (eyeScale) => set({ eyeScale }),
@@ -107,8 +165,7 @@ export const useEmoStore = create<EmoStoreState>((set, get) => ({
       activeNotifications: [notification, ...existingFiltered],
     });
 
-    // Set emotion with auto-return to idle
-    get().setEmotion(nextEmotion, true);
+    get().setEmotion(nextEmotion, true, notification.message);
   },
 
   clearNotification: (agentId) =>
@@ -134,7 +191,7 @@ export const useEmoStore = create<EmoStoreState>((set, get) => ({
     }));
 
     if (msg.emotion) {
-      get().setEmotion(msg.emotion, true);
+      get().setEmotion(msg.emotion, true, msg.text);
     }
   },
 
@@ -142,6 +199,8 @@ export const useEmoStore = create<EmoStoreState>((set, get) => ({
 
   setLLMBusy: (isLLMBusy) => {
     set({ isLLMBusy });
-    get().setEmotion(isLLMBusy ? 'thinking' : 'idle', !isLLMBusy);
+    if (isLLMBusy) {
+      get().setEmotion('thinking', true);
+    }
   },
 }));
