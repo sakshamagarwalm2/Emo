@@ -1,20 +1,19 @@
 # EMO — Minimalist Offline AI Desk Assistant & Agent Monitor
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%28React%20Native%29-green.svg)](#1-target-hardware--platform)
-[![AI Runtime](https://img.shields.io/badge/AI%20Runtime-llama.rn%20%2F%20GGUF-blue.svg)](#4-local-offline-ai-inference)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%28Universal%29-green.svg)](#1-target-hardware--platform)
+[![AI Runtime](https://img.shields.io/badge/AI%20Runtime-llama.rn%20%2F%20GGUF-blue.svg)](#4-on-device-local-ai--model-setup)
 
-**EMO** is a lightweight, always-on landscape desk companion and offline AI agent monitor built with React Native (Bare CLI, TypeScript) targeting mobile hardware such as the **Redmi K20 Pro (Snapdragon 855)**. 
+**EMO** is a lightweight, always-on landscape desk companion and offline AI agent monitor built with React Native (Bare CLI, TypeScript). It turns **any spare or older Android smartphone** (Snapdragon 855/845/700-series or equivalent, 4GB+ RAM, Android 10+) into a dedicated, expressive desk assistant.
 
-EMO operates as a dedicated desk display featuring procedural minimalist digital eyes, OLED ambient clock displays, local GGUF tiny LLM execution (`llama.rn`), and a local WebSocket listener to receive real-time notifications from external AI agents.
+EMO features procedural minimalist digital eyes, AMOLED ambient clock displays, automated in-app local GGUF tiny LLM execution (`llama.rn`), and a local WebSocket listener to receive real-time notifications from external AI agents.
 
 ---
 
-## 1. Target Hardware & Platform
-- **Target Device:** Redmi K20 Pro (Snapdragon 855, 6GB+ RAM) connected via USB with ADB debugging enabled.
-- **OS:** Android 10+ (API Level 29+).
+## 1. Universal Platform Compatibility
+- **Supported Devices:** Any spare Android phone (e.g. Redmi K20 Pro, Pixel 3/4/5, OnePlus 6/7/8, Samsung S9/S10, Poco F1, or any Android 10+ phone with 4GB+ RAM).
 - **Form Factor:** Always-on landscape desk display (`sensorLandscape`, `keepScreenOn`, `WAKE_LOCK`).
-- **Development Environment:** Pure command-line setup (Node.js LTS, JDK 17, Android SDK `cmdline-tools`, `adb`, Gradle wrapper). **Android Studio IDE is NOT required.**
+- **Development Environment:** Command-line setup (Node.js LTS, JDK 17, Android SDK `cmdline-tools`, `adb`, Gradle wrapper). **Android Studio IDE is NOT required.**
 
 ---
 
@@ -23,19 +22,20 @@ EMO operates as a dedicated desk display featuring procedural minimalist digital
 ### 1. Standby Mode (Ambient Display)
 - AMOLED burn-in protected high-contrast dark interface (`#000000` background).
 - Minimalist landscape digital clock, date, battery status, and active agent task count.
-- Idle eye state: subtle procedural blinks (3–6s intervals) and gentle horizontal tracking.
+- Idle eye state: subtle procedural blinks (3–6s intervals) and horizontal tracking.
 
-### 2. Agent Monitor Mode (Reactive)
-- Listens on a local WebSocket (`ws://0.0.0.0:8080`) for agent status payloads.
-- Expressions shift based on agent status:
+### 2. Agent Monitor Mode (Reactive Agentic Detection)
+- Listens on a local WebSocket (`ws://0.0.0.0:8080`) for external agent status payloads.
+- In-app agentic intent parser detects required user actions and shifts expressions:
   - **Working / Thinking:** Pulsing cyan rings or narrowed pupils.
   - **User Input Needed:** Amber alert expression with actionable toast badge.
   - **Success / Done:** Upward crescent happy eyes.
   - **Error:** Red alert eye movement with diagnostic toast.
 
-### 3. On-Device Offline AI Inference
+### 3. On-Device Local AI & Model Setup (In-App Download)
 - Integrated via `llama.rn` for local GGUF quantized models (e.g. `Qwen2.5-0.5B-Instruct-Q4_K_M.gguf`, `SmolLM-360M-Instruct.gguf`).
-- Executes intent parsing, quick classification, and offline queries directly on Snapdragon 855 CPU/GPU.
+- Includes built-in model download management directly within the app (fetches directly from HuggingFace to local device storage).
+- Executes intent parsing, quick classification, and offline queries directly on device CPU/GPU.
 - Intent fallback triggers native Android voice intents (`android.intent.action.VOICE_COMMAND`).
 
 ---
@@ -54,10 +54,11 @@ EMO/
 │   ├── components/
 │   │   ├── EyeDisplay.tsx     # Procedural SVG/Reanimated eye expressions
 │   │   ├── StandbyClock.tsx   # AMOLED desk clock & battery indicator
-│   │   └── AgentToast.tsx     # Actionable notification toasts
+│   │   ├── AgentToast.tsx     # Actionable notification toasts
+│   │   └── ModelDownloadCard.tsx # In-app GGUF downloader & status manager
 │   ├── services/
 │   │   ├── AgentSocketServer.ts # Local WebSocket server & listener
-│   │   └── LocalLLMService.ts   # llama.rn GGUF inference wrapper
+│   │   └── LocalLLMService.ts   # In-app GGUF model downloader & llama.rn wrapper
 │   ├── state/
 │   │   └── useEmoStore.ts     # Zustand global store for state machine
 │   ├── App.tsx                # Main state routing & UI entry point

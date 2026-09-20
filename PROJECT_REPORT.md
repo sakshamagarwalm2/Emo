@@ -2,7 +2,7 @@
 
 **Project Name:** EMO (Emotive Minimalist Offline AI Desk Assistant & Agent Monitor)  
 **Author / Maintainer:** sakshamagarwalm2  
-**Target Hardware:** Qualcomm Snapdragon 855 / 6GB+ RAM (Redmi K20 Pro)  
+**Target Hardware:** Universal Android Smartphones (Snapdragon 855/845/700-series, Helio, Exynos, Tensor, 4GB+ RAM)  
 **Target Platform:** Android 10+ (API Level 29+)  
 **Framework:** React Native 0.74+ (Bare TypeScript CLI, No Expo, No Android Studio GUI Required)  
 **License:** MIT License  
@@ -11,65 +11,34 @@
 
 ## 1. Executive Summary
 
-Project **EMO** is designed to repurpose mobile hardware (specifically the Snapdragon 855 platform found in the Redmi K20 Pro) into an always-on, minimalist offline AI desk assistant and agent status display. Rather than employing resource-heavy 3D avatars or complex graphics rendering pipelines, EMO utilizes procedural vector-based digital eyes and crisp typography to communicate emotional state, system health, and agent status.
+Project **EMO** is designed to repurpose **any spare or older Android smartphone** into an always-on, minimalist offline AI desk assistant and agent status display. Rather than discarding older devices or employing resource-heavy 3D avatar rendering engines, EMO utilizes procedural vector-based digital eyes and crisp typography to communicate emotional state, system health, and agent status.
 
 Key architectural goals include:
-1. **Headless Build Capability:** Fully operable and buildable using command-line tools (Node.js, JDK 17, Android `cmdline-tools`, `gradlew`, and `adb`), eliminating the need for Android Studio IDE.
-2. **Offline Local Inference:** Native execution of 0.5B to 1.5B parameter GGUF models on mobile hardware via `llama.rn` (CPU/GPU acceleration).
-3. **Reactive Agent Monitoring:** Built-in WebSocket server to accept events from background agent workflows (e.g. Antigravity agents, dev scripts, CI pipelines) and convert them into immediate visual feedback.
-4. **AMOLED Hardware Longevity:** Strict `#000000` dark mode with pixel shift protection to enable continuous plugged-in desk operation without burn-in or overheating.
+1. **Universal Android Hardware Reuse:** Compatible with any Android 10+ phone (e.g. Redmi K20 Pro, Pixel 3/4/5, OnePlus 6/7/8, Samsung S9/S10, Poco F1, etc.).
+2. **Headless Build Capability:** Fully operable and buildable using command-line tools (Node.js, JDK 17, Android `cmdline-tools`, `gradlew`, and `adb`), eliminating the need for Android Studio IDE.
+3. **In-App Offline Local Inference Setup:** Built-in model downloading directly inside the app (fetching tiny GGUF quantized LLMs such as `Qwen2.5-0.5B` or `SmolLM-360M` from HuggingFace) with zero manual PC file transfers required.
+4. **Reactive Agent Monitoring:** Built-in WebSocket server to accept events from background agent workflows (e.g. Antigravity agents, dev scripts, CI pipelines) and convert them into immediate visual feedback.
+5. **AMOLED Hardware Longevity:** Strict `#000000` dark mode with pixel shift protection to enable continuous plugged-in desk operation without burn-in or overheating.
 
 ---
 
-## 2. Hardware Performance & Target Profile
+## 2. Universal Hardware Performance Profile
 
-### Qualcomm Snapdragon 855 Specifications
-- **CPU:** Kryo 485 Octa-core (1x 2.84 GHz Prime + 3x 2.42 GHz Performance + 4x 1.80 GHz Efficiency).
-- **GPU:** Adreno 640.
-- **NPU / DSP:** Hexagon 690.
-- **Memory:** 6GB LPDDR4X RAM.
-
-### Model Benchmarks & Allocation Strategy
-For sub-second to 2-second response latency on Snapdragon 855:
-- **Recommended Models:**
-  - `Qwen2.5-0.5B-Instruct-Q4_K_M.gguf` (~390 MB RAM footprint)
-  - `SmolLM-360M-Instruct-Q4_K_M.gguf` (~290 MB RAM footprint)
-- **Inference Speed:** ~15–25 tokens/sec on Kryo 485 CPU cores via `llama.rn` (OpenCL/CPU backends).
-- **RAM Overhead:** ~1.2 GB total app footprint (React Native runtime + llama.rn context buffer + UI state).
+### Processor Categories & Inference Benchmarks
+| Hardware Class | Typical SoC Examples | RAM | Target Model | Est. Speed (Tokens/sec) |
+|----------------|----------------------|-----|--------------|-------------------------|
+| **Flagship (Prev Gen)** | Snapdragon 855 / 865, Exynos 990, Tensor G1 | 6GB-8GB | Qwen2.5-0.5B Q4_K_M | 15–25 t/s |
+| **Mid-Range / Older** | Snapdragon 845 / 765G / 720G, Helio G90T | 4GB-6GB | SmolLM-360M Q4_K_M | 10–20 t/s |
+| **Entry-Level Repurposed** | Snapdragon 665 / 675 / 680 | 4GB | SmolLM-360M Q4_K_M | 6–12 t/s |
 
 ---
 
-## 3. Architecture & Data Flow
+## 3. In-App Model Setup & Automated Downloader
 
-```
-                                    +-----------------------------------+
-                                    |     External AI / Dev Agents      |
-                                    +-----------------------------------+
-                                                      |
-                                           WebSocket JSON Payload
-                                           (ws://0.0.0.0:8080)
-                                                      |
-                                                      v
-+-----------------------------------------------------------------------------------+
-| EMO React Native Runtime                                                          |
-|                                                                                   |
-|  +---------------------------+       +-----------------------------------------+  |
-|  |   AgentSocketServer.ts    | ----> |            useEmoStore (Zustand)        |  |
-|  +---------------------------+       +-----------------------------------------+  |
-|                                                           |                       |
-|                                       +-------------------+-------------------+   |
-|                                       |                                       |   |
-|                                       v                                       v   |
-|                      +----------------------------------+   +-------------------+ |
-|                      |         EyeDisplay.tsx           |   | StandbyClock.tsx  | |
-|                      |  (SVG / Reanimated State Machine) |   | (OLED Dark Mode)  | |
-|                      +----------------------------------+   +-------------------+ |
-|                                                                                   |
-|  +---------------------------+                                                    |
-|  |     LocalLLMService       | <--- llama.rn (Qwen 0.5B / SmolLM 360M GGUF)       |
-|  +---------------------------+                                                    |
-+-----------------------------------------------------------------------------------+
-```
+EMO manages offline AI models completely in-app via `LocalLLMService.ts`:
+1. **Auto Detection:** Checks local device storage (`/data/user/0/com.emo/files/models/` or external app storage) for existing `.gguf` files.
+2. **HuggingFace Direct Download:** If no model is found, user can tap "Download Local Model" in-app. The app fetches the 300MB–400MB GGUF binary directly over HTTPS.
+3. **Context Initialization:** Automatically initializes `llama.rn` context upon download completion.
 
 ---
 
@@ -91,7 +60,7 @@ The UI centerpiece is `EyeDisplay.tsx`, a vector eye display driven by `react-na
 ## 5. Standby Display & Hardware Safety Controls
 
 ### AMOLED Burn-In Prevention
-- **True Black Background:** `#000000` turns off pixels on OLED/AMOLED displays (Redmi K20 Pro features an AMOLED panel).
+- **True Black Background:** `#000000` turns off pixels on OLED/AMOLED displays.
 - **Pixel Shift Mechanism:** Micro-shifts UI elements by 1–2 pixels every 60 seconds to prevent static image retention.
 - **Always-On Screen Keep-Awake:** Uses native `KEEP_SCREEN_ON` window flag and `WAKE_LOCK` permission without turning off the display while connected to USB power.
 
@@ -101,7 +70,6 @@ The UI centerpiece is `EyeDisplay.tsx`, a vector eye display driven by `react-na
 
 The local WebSocket server binds to `0.0.0.0:8080`. External applications communicate with EMO using structured JSON messages.
 
-### Incoming Event Schema
 ```typescript
 interface AgentEventPayload {
   agentId: string;
@@ -112,61 +80,17 @@ interface AgentEventPayload {
 }
 ```
 
-### Response / Ack Schema
-```typescript
-interface EmoAckResponse {
-  received: boolean;
-  currentMode: 'standby' | 'active';
-  activeAgentCount: number;
-}
-```
-
 ---
 
 ## 7. Headless Command-Line Build & Deployment Pipeline
 
 EMO is designed to be fully built and deployed without opening an IDE.
 
-### Step 1: Environment Setup
-Ensure standard CLI variables are set in environment:
-```powershell
-$env:ANDROID_HOME = "C:\Users\SAKSHAM\AppData\Local\Android\Sdk"
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
-```
-
-### Step 2: Build Debug APK
 ```bash
-cd android
-./gradlew assembleDebug
-```
+# 1. Build Debug APK
+cd android && ./gradlew assembleDebug && cd ..
 
-### Step 3: Deployment via ADB
-```bash
-# Check device state
-adb devices
-
-# Install APK
+# 2. Deploy via ADB
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-
-# Launch MainActivity in Landscape Mode
 adb shell am start -n com.emo/.MainActivity
 ```
-
----
-
-## 8. Development Roadmap
-
-- [x] Technical Architecture & System Specification
-- [x] Repository Baseline & Documentation Setup
-- [ ] React Native Core Structure & TypeScript Configuration
-- [ ] SVG / Reanimated Procedural Eye Component (`EyeDisplay.tsx`)
-- [ ] Standby OLED Clock Component (`StandbyClock.tsx`)
-- [ ] Local WebSocket Agent Listener (`AgentSocketServer.ts`)
-- [ ] `llama.rn` Local GGUF Model Runtime Wrapper (`LocalLLMService.ts`)
-- [ ] Gradle & ADB Deployment Validation on Device
-
----
-
-## 9. Conclusion
-
-Project EMO delivers an efficient, low-overhead desk companion that converts an idle smartphone into a smart AI agent dashboard. By leveraging native React Native execution and local GGUF models, EMO provides real-time ambient feedback without relying on cloud services or heavy IDE dependencies.

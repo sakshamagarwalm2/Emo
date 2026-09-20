@@ -3,6 +3,7 @@ import { SafeAreaView, View, StyleSheet, StatusBar } from 'react-native';
 import { EyeDisplay } from './components/EyeDisplay';
 import { StandbyClock } from './components/StandbyClock';
 import { AgentToast } from './components/AgentToast';
+import { ModelDownloadCard } from './components/ModelDownloadCard';
 import { AgentSocketServer } from './services/AgentSocketServer';
 
 export const App: React.FC = () => {
@@ -25,6 +26,9 @@ export const App: React.FC = () => {
 
         {/* OLED Standby Clock & Task Counter */}
         <StandbyClock />
+
+        {/* In-App Offline LLM Model Download Card */}
+        <ModelDownloadCard />
 
         {/* Agent Toast Notification Overlay */}
         <AgentToast />
