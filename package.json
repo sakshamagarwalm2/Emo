@@ -1,0 +1,36 @@
+{
+  "name": "EMO",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimalist Offline AI Desk Assistant & Agent Monitor",
+  "main": "index.js",
+  "scripts": {
+    "android": "react-native run-android",
+    "start": "react-native start",
+    "lint": "eslint .",
+    "test": "jest",
+    "build:android": "cd android && ./gradlew assembleDebug",
+    "deploy": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk && adb shell am start -n com.emo/.MainActivity"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-native": "0.74.5",
+    "react-native-reanimated": "^3.12.0",
+    "react-native-svg": "^15.3.0",
+    "react-native-keep-awake": "^4.0.0",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/runtime": "^7.24.0",
+    "@react-native/babel-preset": "^0.74.83",
+    "@react-native/metro-config": "^0.74.83",
+    "@types/react": "^18.3.3",
+    "@types/react-native": "^0.72.8",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,26 @@
+# Node & React Native
+node_modules/
+npm-debug.log
+yarn-error.log
+.DS_Store
+
+# Android
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/libs/
+*.apk
+*.aar
+*.keystore
+
+# Local Models
+src/assets/models/*.gguf
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.bak
+
+# Antigravity Brain Scratch / System Logs
+.system_generated/
