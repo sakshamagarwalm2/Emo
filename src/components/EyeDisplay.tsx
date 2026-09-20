@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { EmoEmotion, useEmoStore } from '../state/useEmoStore';
 import { StandbyClock } from './StandbyClock';
+import { MouthBarVisualizer, AgentState } from './MouthBarVisualizer';
 
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedG = Animated.createAnimatedComponent(G);
@@ -226,6 +227,18 @@ export const EyeDisplay: React.FC = () => {
     setEmotion(states[nextIdx]);
   };
 
+  // Map emotion to mouth visualizer state & eye-matching color
+  let mouthState: AgentState = 'idle';
+  if (emotion === 'thinking') mouthState = 'thinking';
+  else if (emotion === 'happy') mouthState = 'speaking';
+  else if (isSpotifyReact) mouthState = 'listening';
+
+  let mouthColor = '#00E5FF';
+  if (emotion === 'concerned') mouthColor = '#9FA8DA';
+  else if (emotion === 'stressed' || emotion === 'irritated') mouthColor = '#FF9800';
+  else if (emotion === 'alert') mouthColor = '#FFC107';
+  else if (emotion === 'error') mouthColor = '#FF5252';
+
   return (
     <View style={styles.fullScreenContainer}>
       {showStandbyClock ? (
@@ -288,6 +301,18 @@ export const EyeDisplay: React.FC = () => {
             </AnimatedG>
           </Svg>
         </TouchableOpacity>
+      )}
+
+      {/* Centered ElevenLabs-inspired Digital Mouth Bar Visualizer */}
+      {!showStandbyClock && (
+        <View style={styles.bottomCenterMouthContainer}>
+          <MouthBarVisualizer
+            state={mouthState}
+            color={mouthColor}
+            isAudioReactive={isSpotifyReact}
+            barCount={13}
+          />
+        </View>
       )}
 
       {/* Bottom Left Corner Spotify Logo Audio React Button */}
@@ -366,5 +391,11 @@ const styles = StyleSheet.create({
     textShadowColor: '#00E5FF',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
+  },
+  bottomCenterMouthContainer: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    zIndex: 99,
   },
 });
