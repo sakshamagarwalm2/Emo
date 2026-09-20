@@ -8,7 +8,8 @@ export type EmoEmotion =
   | 'error'
   | 'stressed'
   | 'irritated'
-  | 'ignoring';
+  | 'ignoring'
+  | 'concerned';
 
 export type EmoMode = 'standby' | 'active' | 'chat';
 

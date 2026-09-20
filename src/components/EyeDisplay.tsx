@@ -69,7 +69,7 @@ export const EyeDisplay: React.FC = () => {
         return () => clearInterval(blinkInterval);
 
       case 'happy':
-        // EVE Happy YES Nodding: Upward crescents (^ ^) nodding up and down
+        // EVE Happy YES Nodding: Upward crescents (^ ^)
         eyeRy.value = withSpring(34, SPRING_CONFIG);
         eyeRx.value = withSpring(64, SPRING_CONFIG);
         leftAngle.value = withSpring(0, SPRING_CONFIG);
@@ -77,13 +77,24 @@ export const EyeDisplay: React.FC = () => {
         coreColor.value = '#00E5FF';
         auraColor.value = '#00838F';
 
-        // Nodding YES Up & Down Sequence
         eyeTranslateY.value = withSequence(
           withTiming(-14, { duration: 180 }),
           withTiming(14, { duration: 180 }),
           withTiming(-10, { duration: 160 }),
           withTiming(0, { duration: 160 })
         );
+        break;
+
+      case 'concerned':
+        // Concerned / Caring: Inner corners raised (/ \), soft indigo-lavender glow
+        eyeRy.value = withSpring(48, SPRING_CONFIG);
+        eyeRx.value = withSpring(68, SPRING_CONFIG);
+        eyeTranslateX.value = withSpring(0, SPRING_CONFIG);
+        eyeTranslateY.value = withSpring(4, SPRING_CONFIG);
+        leftAngle.value = withSpring(-16, SPRING_CONFIG); // Raised inner brow
+        rightAngle.value = withSpring(16, SPRING_CONFIG);  // Raised inner brow
+        coreColor.value = '#9FA8DA'; // Soft Lavender Indigo
+        auraColor.value = '#3F51B5';
         break;
 
       case 'ignoring':
@@ -108,7 +119,6 @@ export const EyeDisplay: React.FC = () => {
         coreColor.value = '#FF9800'; // Panicked Orange
         auraColor.value = '#E65100';
 
-        // Shaking NO Side-to-Side Sequence
         eyeTranslateX.value = withSequence(
           withTiming(-18, { duration: 140 }),
           withTiming(18, { duration: 140 }),
@@ -192,6 +202,7 @@ export const EyeDisplay: React.FC = () => {
     const states: EmoEmotion[] = [
       'idle',
       'happy',
+      'concerned',
       'ignoring',
       'stressed',
       'thinking',
@@ -204,7 +215,6 @@ export const EyeDisplay: React.FC = () => {
 
   return (
     <View style={styles.fullScreenContainer}>
-      {/* Standby Desk Clock View OR EVE Glowing Eye View */}
       {showStandbyClock ? (
         <StandbyClock />
       ) : (
@@ -310,7 +320,7 @@ const styles = StyleSheet.create({
     zIndex: 99,
   },
   spotifyLogoIcon: {
-    color: '#1DB954', // Spotify Green
+    color: '#1DB954',
     fontSize: 22,
     fontWeight: '900',
   },
