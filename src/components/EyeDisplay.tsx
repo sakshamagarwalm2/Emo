@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import Svg, { Ellipse, Defs, RadialGradient, Stop, G } from 'react-native-svg';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import Svg, { Ellipse, Path, Defs, RadialGradient, Stop, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -10,73 +10,84 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { EmoEmotion, useEmoStore } from '../state/useEmoStore';
+import { StandbyClock } from './StandbyClock';
 
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedG = Animated.createAnimatedComponent(G);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export const EyeDisplay: React.FC = () => {
   const emotion = useEmoStore((state) => state.emotion);
-  const eyeScale = useEmoStore((state) => state.eyeScale);
   const setEmotion = useEmoStore((state) => state.setEmotion);
+  const [showStandbyClock, setShowStandbyClock] = useState<boolean>(false);
 
-  // Reanimated Shared Values matching EVE WALL-E aesthetic
+  // Shared Values for EVE WALL-E Eye Animations
   const eyeRy = useSharedValue(42);         // Vertical radius
   const eyeRx = useSharedValue(70);         // Horizontal radius
-  const eyeTranslateX = useSharedValue(0);  // Horizontal glance shift
-  const eyeTranslateY = useSharedValue(0);  // Vertical glance shift
-  const leftAngle = useSharedValue(12);     // Inward slant angle for left eye (deg)
-  const rightAngle = useSharedValue(-12);   // Inward slant angle for right eye (deg)
-  const masterScale = useSharedValue(1.0);  // Master scale transform
+  const eyeTranslateX = useSharedValue(0);  // Horizontal glance offset
+  const eyeTranslateY = useSharedValue(0);  // Vertical glance offset
+  const leftAngle = useSharedValue(14);     // Inward slant angle (deg)
+  const rightAngle = useSharedValue(-14);   // Inward slant angle (deg)
+  const isHappyShape = useSharedValue(0);   // 1 for EVE happy crescent path, 0 for ellipse
   
-  // Dynamic Color Stops
-  const coreColor = useSharedValue('#29B6F6'); // Electric Cyan Core
-  const auraColor = useSharedValue('#0288D1'); // Glowing Cyan Aura
-
-  useEffect(() => {
-    masterScale.value = withTiming(eyeScale, { duration: 300 });
-  }, [eyeScale]);
+  // Color stops
+  const coreColor = useSharedValue('#29B6F6'); // EVE Electric Cyan
+  const auraColor = useSharedValue('#0288D1');
 
   useEffect(() => {
     switch (emotion) {
       case 'idle':
+        isHappyShape.value = withTiming(0, { duration: 250 });
         eyeRy.value = withTiming(42, { duration: 300 });
         eyeRx.value = withTiming(70, { duration: 300 });
         eyeTranslateX.value = withTiming(0, { duration: 300 });
         eyeTranslateY.value = withTiming(0, { duration: 300 });
-        leftAngle.value = withTiming(12, { duration: 300 });
-        rightAngle.value = withTiming(-12, { duration: 300 });
+        leftAngle.value = withTiming(14, { duration: 300 });
+        rightAngle.value = withTiming(-14, { duration: 300 });
         coreColor.value = '#29B6F6';
         auraColor.value = '#0288D1';
 
-        // Organic blink & lookaround loop
+        // EVE periodic blink & glance
         const blinkInterval = setInterval(() => {
           eyeRy.value = withSequence(
-            withTiming(3, { duration: 90 }),
+            withTiming(2, { duration: 90 }),
             withTiming(42, { duration: 120 })
           );
 
-          if (Math.random() > 0.4) {
-            const randomX = (Math.random() - 0.5) * 20;
-            const randomY = (Math.random() - 0.5) * 10;
-            eyeTranslateX.value = withTiming(randomX, { duration: 400 });
-            eyeTranslateY.value = withTiming(randomY, { duration: 400 });
+          if (Math.random() > 0.45) {
+            const randomX = (Math.random() - 0.5) * 24;
+            const randomY = (Math.random() - 0.5) * 12;
+            eyeTranslateX.value = withTiming(randomX, { duration: 350 });
+            eyeTranslateY.value = withTiming(randomY, { duration: 350 });
           }
-        }, 3800);
+        }, 3600);
 
         return () => clearInterval(blinkInterval);
 
+      case 'happy':
+        // EVE Happy: Upward curved crescent eyes (^ ^)
+        isHappyShape.value = withTiming(1, { duration: 250 });
+        eyeTranslateX.value = withTiming(0, { duration: 250 });
+        eyeTranslateY.value = withTiming(0, { duration: 250 });
+        leftAngle.value = withTiming(0, { duration: 250 });
+        rightAngle.value = withTiming(0, { duration: 250 });
+        coreColor.value = '#00E5FF'; // EVE Glowing Cyan
+        auraColor.value = '#00838F';
+        break;
+
       case 'thinking':
-        eyeRy.value = withTiming(28, { duration: 250 });
-        eyeRx.value = withTiming(75, { duration: 250 });
-        leftAngle.value = withTiming(5, { duration: 250 });
-        rightAngle.value = withTiming(-5, { duration: 250 });
+        isHappyShape.value = withTiming(0, { duration: 250 });
+        eyeRy.value = withTiming(24, { duration: 250 });
+        eyeRx.value = withTiming(76, { duration: 250 });
+        leftAngle.value = withTiming(4, { duration: 250 });
+        rightAngle.value = withTiming(-4, { duration: 250 });
         coreColor.value = '#00E5FF';
         auraColor.value = '#00838F';
 
         eyeRy.value = withRepeat(
           withSequence(
-            withTiming(32, { duration: 600 }),
-            withTiming(24, { duration: 600 })
+            withTiming(30, { duration: 550 }),
+            withTiming(20, { duration: 550 })
           ),
           -1,
           true
@@ -84,46 +95,29 @@ export const EyeDisplay: React.FC = () => {
         break;
 
       case 'alert':
-        eyeRy.value = withTiming(55, { duration: 150 });
-        eyeRx.value = withTiming(75, { duration: 150 });
-        leftAngle.value = withTiming(18, { duration: 150 });
-        rightAngle.value = withTiming(-18, { duration: 150 });
-        coreColor.value = '#FFC107'; // Amber Glow
+        isHappyShape.value = withTiming(0, { duration: 200 });
+        eyeRy.value = withTiming(58, { duration: 200 });
+        eyeRx.value = withTiming(74, { duration: 200 });
+        leftAngle.value = withTiming(18, { duration: 200 });
+        rightAngle.value = withTiming(-18, { duration: 200 });
+        coreColor.value = '#FFC107'; // Amber Alert
         auraColor.value = '#FF8F00';
         break;
 
-      case 'happy':
-        eyeRy.value = withTiming(38, { duration: 250 });
-        eyeRx.value = withTiming(65, { duration: 250 });
-        leftAngle.value = withTiming(0, { duration: 250 });
-        rightAngle.value = withTiming(0, { duration: 250 });
-        coreColor.value = '#66BB6A'; // Happy Green
-        auraColor.value = '#2E7D32';
-        break;
-
-      case 'error':
-        eyeRy.value = withTiming(30, { duration: 200 });
-        eyeRx.value = withTiming(78, { duration: 200 });
-        leftAngle.value = withTiming(25, { duration: 200 });
-        rightAngle.value = withTiming(-25, { duration: 200 });
-        coreColor.value = '#FF5252'; // Crimson Red
-        auraColor.value = '#C62828';
-        break;
-
       case 'stressed':
-        // Stressed: Narrow squished eyes with high-frequency micro jitter
-        eyeRy.value = withTiming(20, { duration: 200 });
+        isHappyShape.value = withTiming(0, { duration: 200 });
+        eyeRy.value = withTiming(18, { duration: 200 });
         eyeRx.value = withTiming(82, { duration: 200 });
         leftAngle.value = withTiming(15, { duration: 200 });
         rightAngle.value = withTiming(-15, { duration: 200 });
         coreColor.value = '#FF9800'; // Panicked Orange
         auraColor.value = '#E65100';
 
-        // Micro tremble shake
+        // Fast micro tremble shake
         eyeTranslateX.value = withRepeat(
           withSequence(
-            withTiming(4, { duration: 60 }),
-            withTiming(-4, { duration: 60 })
+            withTiming(5, { duration: 50 }),
+            withTiming(-5, { duration: 50 })
           ),
           -1,
           true
@@ -131,30 +125,39 @@ export const EyeDisplay: React.FC = () => {
         break;
 
       case 'irritated':
-        // Irritated: Annoyed parallel brow slant (both eyes angled down-left)
-        eyeRy.value = withTiming(24, { duration: 250 });
+        isHappyShape.value = withTiming(0, { duration: 250 });
+        eyeRy.value = withTiming(22, { duration: 250 });
         eyeRx.value = withTiming(72, { duration: 250 });
-        leftAngle.value = withTiming(22, { duration: 250 });
-        rightAngle.value = withTiming(22, { duration: 250 }); // Parallel annoyed angle
-        coreColor.value = '#FF3D00'; // Annoyed Deep Red-Orange
+        leftAngle.value = withTiming(24, { duration: 250 });
+        rightAngle.value = withTiming(24, { duration: 250 }); // Annoyed parallel slant
+        coreColor.value = '#FF3D00'; // Deep Red-Orange
         auraColor.value = '#BF360C';
         break;
 
       case 'ignoring':
-        // Ignoring: Eyes turn away to upper-right corner and slowly blink
-        eyeRy.value = withTiming(35, { duration: 300 });
-        eyeRx.value = withTiming(60, { duration: 300 });
-        eyeTranslateX.value = withTiming(42, { duration: 400 });  // Looking away
-        eyeTranslateY.value = withTiming(-22, { duration: 400 }); // Looking up
-        leftAngle.value = withTiming(-5, { duration: 300 });
-        rightAngle.value = withTiming(5, { duration: 300 });
-        coreColor.value = '#B0BEC5'; // Dismissive Cool Silver
+        isHappyShape.value = withTiming(0, { duration: 300 });
+        eyeRy.value = withTiming(34, { duration: 300 });
+        eyeRx.value = withTiming(58, { duration: 300 });
+        eyeTranslateX.value = withTiming(44, { duration: 350 });  // Looking away
+        eyeTranslateY.value = withTiming(-24, { duration: 350 }); // Looking up
+        leftAngle.value = withTiming(-6, { duration: 300 });
+        rightAngle.value = withTiming(6, { duration: 300 });
+        coreColor.value = '#B0BEC5'; // Silver-blue
         auraColor.value = '#546E7A';
+        break;
+
+      case 'error':
+        isHappyShape.value = withTiming(0, { duration: 200 });
+        eyeRy.value = withTiming(28, { duration: 200 });
+        eyeRx.value = withTiming(80, { duration: 200 });
+        leftAngle.value = withTiming(28, { duration: 200 });
+        rightAngle.value = withTiming(-28, { duration: 200 });
+        coreColor.value = '#FF5252'; // Crimson
+        auraColor.value = '#C62828';
         break;
     }
   }, [emotion]);
 
-  // Animated SVG Props
   const leftEyeProps = useAnimatedProps(() => ({
     ry: eyeRy.value,
     rx: eyeRx.value,
@@ -170,7 +173,6 @@ export const EyeDisplay: React.FC = () => {
       { translateX: 100 + eyeTranslateX.value },
       { translateY: 90 + eyeTranslateY.value },
       { rotate: `${leftAngle.value}deg` },
-      { scale: masterScale.value },
     ] as any,
   }));
 
@@ -179,12 +181,10 @@ export const EyeDisplay: React.FC = () => {
       { translateX: 260 + eyeTranslateX.value },
       { translateY: 90 + eyeTranslateY.value },
       { rotate: `${rightAngle.value}deg` },
-      { scale: masterScale.value },
     ] as any,
   }));
 
-  // Tap to cycle all cute emotions manually
-  const handleTap = () => {
+  const handleTapEye = () => {
     const states: EmoEmotion[] = [
       'idle',
       'happy',
@@ -200,44 +200,99 @@ export const EyeDisplay: React.FC = () => {
   };
 
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={handleTap} style={styles.touchContainer}>
-      <Svg height="180" width="360" viewBox="0 0 360 180">
-        <Defs>
-          <RadialGradient id="eyeGlowLeft" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-            <Stop offset="0%" stopColor="#80D8FF" stopOpacity="1" />
-            <Stop offset="45%" stopColor={coreColor.value} stopOpacity="0.95" />
-            <Stop offset="85%" stopColor={auraColor.value} stopOpacity="0.6" />
-            <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
-          </RadialGradient>
+    <View style={styles.fullScreenContainer}>
+      {/* Standby Desk Clock View OR EVE Glowing Eye View */}
+      {showStandbyClock ? (
+        <StandbyClock />
+      ) : (
+        <TouchableOpacity activeOpacity={0.95} onPress={handleTapEye} style={styles.eyeTouchContainer}>
+          <Svg height="220" width="380" viewBox="0 0 380 220">
+            <Defs>
+              <RadialGradient id="eveGlowLeft" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#80D8FF" stopOpacity="1" />
+                <Stop offset="45%" stopColor={coreColor.value} stopOpacity="0.95" />
+                <Stop offset="85%" stopColor={auraColor.value} stopOpacity="0.6" />
+                <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+              </RadialGradient>
+              <RadialGradient id="eveGlowRight" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#80D8FF" stopOpacity="1" />
+                <Stop offset="45%" stopColor={coreColor.value} stopOpacity="0.95" />
+                <Stop offset="85%" stopColor={auraColor.value} stopOpacity="0.6" />
+                <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
 
-          <RadialGradient id="eyeGlowRight" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-            <Stop offset="0%" stopColor="#80D8FF" stopOpacity="1" />
-            <Stop offset="45%" stopColor={coreColor.value} stopOpacity="0.95" />
-            <Stop offset="85%" stopColor={auraColor.value} stopOpacity="0.6" />
-            <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
-          </RadialGradient>
-        </Defs>
+            {/* Left Eye */}
+            <AnimatedG animatedProps={leftGroupProps}>
+              <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowLeft)" opacity={0.35} />
+              {emotion === 'happy' ? (
+                // EVE Iconic Happy Crescent Path (^ ^)
+                <Path
+                  d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
+                  fill="url(#eveGlowLeft)"
+                />
+              ) : (
+                <AnimatedEllipse cx="0" cy="0" animatedProps={leftEyeProps} fill="url(#eveGlowLeft)" />
+              )}
+            </AnimatedG>
 
-        {/* Left Eye Group */}
-        <AnimatedG animatedProps={leftGroupProps}>
-          <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eyeGlowLeft)" opacity={0.35} />
-          <AnimatedEllipse cx="0" cy="0" animatedProps={leftEyeProps} fill="url(#eyeGlowLeft)" />
-        </AnimatedG>
+            {/* Right Eye */}
+            <AnimatedG animatedProps={rightGroupProps}>
+              <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eveGlowRight)" opacity={0.35} />
+              {emotion === 'happy' ? (
+                // EVE Iconic Happy Crescent Path (^ ^)
+                <Path
+                  d="M -48,15 Q 0,-38 48,15 Q 0,-15 -48,15 Z"
+                  fill="url(#eveGlowRight)"
+                />
+              ) : (
+                <AnimatedEllipse cx="0" cy="0" animatedProps={rightEyeProps} fill="url(#eveGlowRight)" />
+              )}
+            </AnimatedG>
+          </Svg>
+        </TouchableOpacity>
+      )}
 
-        {/* Right Eye Group */}
-        <AnimatedG animatedProps={rightGroupProps}>
-          <AnimatedEllipse cx="0" cy="0" rx="82" ry="54" fill="url(#eyeGlowRight)" opacity={0.35} />
-          <AnimatedEllipse cx="0" cy="0" animatedProps={rightEyeProps} fill="url(#eyeGlowRight)" />
-        </AnimatedG>
-      </Svg>
-    </TouchableOpacity>
+      {/* Bottom Right Corner Small Dot Mode Switch Button */}
+      <TouchableOpacity
+        style={styles.bottomRightDotButton}
+        onPress={() => setShowStandbyClock((prev) => !prev)}
+        activeOpacity={0.6}
+      >
+        <View style={[styles.dotIndicator, showStandbyClock && styles.dotActive]} />
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  touchContainer: {
+  fullScreenContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    position: 'relative',
+  },
+  eyeTouchContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomRightDotButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    padding: 12,
+    zIndex: 99,
+  },
+  dotIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#333333',
+  },
+  dotActive: {
+    backgroundColor: '#00E5FF',
   },
 });
