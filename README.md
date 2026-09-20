@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/assets/emo_banner.jpg" alt="EMO Banner" width="100%" />
-</p>
+![EMO Banner](docs/assets/emo_banner.jpg)
 
 # EMO — Minimalist Offline AI Desk Assistant & Agent Monitor
 
