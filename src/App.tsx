@@ -4,6 +4,7 @@ import { EyeDisplay } from './components/EyeDisplay';
 import { StandbyClock } from './components/StandbyClock';
 import { AgentToast } from './components/AgentToast';
 import { ModelDownloadCard } from './components/ModelDownloadCard';
+import { VoiceControlPanel } from './components/VoiceControlPanel';
 import { AgentSocketServer } from './services/AgentSocketServer';
 
 export const App: React.FC = () => {
@@ -21,11 +22,14 @@ export const App: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar hidden barStyle="light-content" backgroundColor="#000000" />
       <View style={styles.container}>
-        {/* Animated Procedural Eye Interface */}
+        {/* Animated Procedural Eye Interface matching cyan glow aesthetics */}
         <EyeDisplay />
 
         {/* OLED Standby Clock & Task Counter */}
         <StandbyClock />
+
+        {/* Voice Dictation & Local Intent Classifier Controls */}
+        <VoiceControlPanel />
 
         {/* In-App Offline LLM Model Download Card */}
         <ModelDownloadCard />
