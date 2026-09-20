@@ -28,17 +28,20 @@ export interface AgentNotification {
   timestamp: string;
 }
 
+let autoResetTimer: ReturnType<typeof setTimeout> | null = null;
+const IDLE_RESET_DELAY_MS = 4500; // 4.5 seconds auto-return to idle
+
 interface EmoStoreState {
   mode: EmoMode;
   emotion: EmoEmotion;
   activeNotifications: AgentNotification[];
   chatMessages: ChatMessage[];
   isLLMBusy: boolean;
-  eyeScale: number; // Dynamic eye size scaling (0.8x to 1.3x)
+  eyeScale: number;
 
   // Actions
   setMode: (mode: EmoMode) => void;
-  setEmotion: (emotion: EmoEmotion) => void;
+  setEmotion: (emotion: EmoEmotion, autoReset?: boolean) => void;
   setEyeScale: (scale: number) => void;
   addNotification: (notification: AgentNotification) => void;
   clearNotification: (agentId: string) => void;
@@ -47,7 +50,7 @@ interface EmoStoreState {
   setLLMBusy: (busy: boolean) => void;
 }
 
-export const useEmoStore = create<EmoStoreState>((set) => ({
+export const useEmoStore = create<EmoStoreState>((set, get) => ({
   mode: 'standby',
   emotion: 'idle',
   activeNotifications: [],
@@ -64,28 +67,48 @@ export const useEmoStore = create<EmoStoreState>((set) => ({
   eyeScale: 1.0,
 
   setMode: (mode) => set({ mode }),
-  setEmotion: (emotion) => set({ emotion }),
+
+  setEmotion: (emotion: EmoEmotion, autoReset: boolean = true) => {
+    // Clear any existing reset timer
+    if (autoResetTimer) {
+      clearTimeout(autoResetTimer);
+      autoResetTimer = null;
+    }
+
+    set({ emotion });
+
+    // Automatically return to 'idle' after 4.5 seconds if emotion is not idle
+    if (autoReset && emotion !== 'idle') {
+      autoResetTimer = setTimeout(() => {
+        set({ emotion: 'idle' });
+        autoResetTimer = null;
+      }, IDLE_RESET_DELAY_MS);
+    }
+  },
+
   setEyeScale: (eyeScale) => set({ eyeScale }),
 
-  addNotification: (notification) =>
-    set((state) => {
-      let nextEmotion: EmoEmotion = 'idle';
-      if (notification.status === 'working') nextEmotion = 'thinking';
-      else if (notification.status === 'waiting_for_input' || notification.requiresUserAction)
-        nextEmotion = 'alert';
-      else if (notification.status === 'done') nextEmotion = 'happy';
-      else if (notification.status === 'error') nextEmotion = 'error';
+  addNotification: (notification) => {
+    let nextEmotion: EmoEmotion = 'idle';
+    if (notification.status === 'working') nextEmotion = 'thinking';
+    else if (notification.status === 'waiting_for_input' || notification.requiresUserAction)
+      nextEmotion = 'alert';
+    else if (notification.status === 'done') nextEmotion = 'happy';
+    else if (notification.status === 'error') nextEmotion = 'error';
 
-      const existingFiltered = state.activeNotifications.filter(
-        (n) => n.agentId !== notification.agentId
-      );
+    const state = get();
+    const existingFiltered = state.activeNotifications.filter(
+      (n) => n.agentId !== notification.agentId
+    );
 
-      return {
-        emotion: nextEmotion,
-        mode: 'active',
-        activeNotifications: [notification, ...existingFiltered],
-      };
-    }),
+    set({
+      mode: 'active',
+      activeNotifications: [notification, ...existingFiltered],
+    });
+
+    // Set emotion with auto-return to idle
+    get().setEmotion(nextEmotion, true);
+  },
 
   clearNotification: (agentId) =>
     set((state) => {
@@ -96,7 +119,7 @@ export const useEmoStore = create<EmoStoreState>((set) => ({
       };
     }),
 
-  addChatMessage: (msg) =>
+  addChatMessage: (msg) => {
     set((state) => ({
       chatMessages: [
         ...state.chatMessages,
@@ -106,15 +129,18 @@ export const useEmoStore = create<EmoStoreState>((set) => ({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ],
-      emotion: msg.emotion || state.emotion,
       mode: 'chat',
-    })),
+    }));
+
+    if (msg.emotion) {
+      get().setEmotion(msg.emotion, true);
+    }
+  },
 
   clearChat: () => set({ chatMessages: [] }),
 
-  setLLMBusy: (isLLMBusy) =>
-    set({
-      isLLMBusy,
-      emotion: isLLMBusy ? 'thinking' : 'idle',
-    }),
+  setLLMBusy: (isLLMBusy) => {
+    set({ isLLMBusy });
+    get().setEmotion(isLLMBusy ? 'thinking' : 'idle', !isLLMBusy);
+  },
 }));
