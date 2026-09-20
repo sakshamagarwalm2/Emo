@@ -20,11 +20,11 @@ export interface MouthBarVisualizerProps {
  */
 export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
   state = 'idle',
-  barCount = 13,
+  barCount = 15,
   color = '#00E5FF',
   centerAlign = true,
-  minHeight = 4,
-  maxHeight = 36,
+  minHeight = 6,
+  maxHeight = 52,
   isAudioReactive = false,
 }) => {
   const animatedValues = useRef<Animated.Value[]>(
@@ -48,14 +48,14 @@ export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
           targetVal = minHeight + (randVal - minHeight) * centerFactor;
         } else if (state === 'listening') {
           const pulse = Math.sin(Date.now() / 200 + i * 0.5) * 0.5 + 0.5;
-          targetVal = minHeight + (maxHeight * 0.4 - minHeight) * pulse * centerFactor;
+          targetVal = minHeight + (maxHeight * 0.45 - minHeight) * pulse * centerFactor;
         } else if (state === 'thinking') {
           const wave = Math.sin(Date.now() / 150 - i * 0.6) * 0.5 + 0.5;
-          targetVal = minHeight + (maxHeight * 0.6 - minHeight) * wave;
+          targetVal = minHeight + (maxHeight * 0.65 - minHeight) * wave;
         } else {
           // Idle state: subtle quiet resting mouth
           const quietPulse = Math.sin(Date.now() / 600 + i) * 0.2 + 0.2;
-          targetVal = minHeight + quietPulse * 3;
+          targetVal = minHeight + quietPulse * 4;
         }
 
         return Animated.timing(anim, {
@@ -95,9 +95,9 @@ export const MouthBarVisualizer: React.FC<MouthBarVisualizerProps> = ({
                 backgroundColor: color,
                 shadowColor: color,
                 shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 6,
-                elevation: 4,
+                shadowOpacity: 0.9,
+                shadowRadius: 10,
+                elevation: 6,
               },
             ]}
           />
@@ -112,12 +112,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 40,
-    paddingHorizontal: 8,
+    height: 60,
+    paddingHorizontal: 12,
   },
   bar: {
-    width: 3.5,
-    marginHorizontal: 2,
-    borderRadius: 2,
+    width: 5.5,
+    marginHorizontal: 3,
+    borderRadius: 3,
   },
 });

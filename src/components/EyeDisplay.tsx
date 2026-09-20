@@ -310,7 +310,9 @@ export const EyeDisplay: React.FC = () => {
             state={mouthState}
             color={mouthColor}
             isAudioReactive={isSpotifyReact}
-            barCount={13}
+            barCount={15}
+            minHeight={6}
+            maxHeight={52}
           />
         </View>
       )}
