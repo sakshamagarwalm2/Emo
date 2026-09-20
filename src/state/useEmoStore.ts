@@ -1,7 +1,24 @@
 import { create } from 'zustand';
 
-export type EmoEmotion = 'idle' | 'thinking' | 'alert' | 'happy' | 'error';
-export type EmoMode = 'standby' | 'active';
+export type EmoEmotion =
+  | 'idle'
+  | 'thinking'
+  | 'alert'
+  | 'happy'
+  | 'error'
+  | 'stressed'
+  | 'irritated'
+  | 'ignoring';
+
+export type EmoMode = 'standby' | 'active' | 'chat';
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'emo';
+  text: string;
+  emotion?: EmoEmotion;
+  timestamp: string;
+}
 
 export interface AgentNotification {
   agentId: string;
@@ -15,34 +32,47 @@ interface EmoStoreState {
   mode: EmoMode;
   emotion: EmoEmotion;
   activeNotifications: AgentNotification[];
-  lastLLMResponse: string | null;
+  chatMessages: ChatMessage[];
   isLLMBusy: boolean;
-  
+  eyeScale: number; // Dynamic eye size scaling (0.8x to 1.3x)
+
   // Actions
   setMode: (mode: EmoMode) => void;
   setEmotion: (emotion: EmoEmotion) => void;
+  setEyeScale: (scale: number) => void;
   addNotification: (notification: AgentNotification) => void;
   clearNotification: (agentId: string) => void;
+  addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  clearChat: () => void;
   setLLMBusy: (busy: boolean) => void;
-  setLLMResponse: (response: string | null) => void;
 }
 
 export const useEmoStore = create<EmoStoreState>((set) => ({
   mode: 'standby',
   emotion: 'idle',
   activeNotifications: [],
-  lastLLMResponse: null,
+  chatMessages: [
+    {
+      id: 'welcome-0',
+      sender: 'emo',
+      text: "Hi! I'm EMO, your desk companion. Talk to me anytime!",
+      emotion: 'happy',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    },
+  ],
   isLLMBusy: false,
+  eyeScale: 1.0,
 
   setMode: (mode) => set({ mode }),
   setEmotion: (emotion) => set({ emotion }),
-  
+  setEyeScale: (eyeScale) => set({ eyeScale }),
+
   addNotification: (notification) =>
     set((state) => {
-      // Map notification status to visual emotion state
       let nextEmotion: EmoEmotion = 'idle';
       if (notification.status === 'working') nextEmotion = 'thinking';
-      else if (notification.status === 'waiting_for_input' || notification.requiresUserAction) nextEmotion = 'alert';
+      else if (notification.status === 'waiting_for_input' || notification.requiresUserAction)
+        nextEmotion = 'alert';
       else if (notification.status === 'done') nextEmotion = 'happy';
       else if (notification.status === 'error') nextEmotion = 'error';
 
@@ -66,11 +96,25 @@ export const useEmoStore = create<EmoStoreState>((set) => ({
       };
     }),
 
+  addChatMessage: (msg) =>
+    set((state) => ({
+      chatMessages: [
+        ...state.chatMessages,
+        {
+          ...msg,
+          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ],
+      emotion: msg.emotion || state.emotion,
+      mode: 'chat',
+    })),
+
+  clearChat: () => set({ chatMessages: [] }),
+
   setLLMBusy: (isLLMBusy) =>
     set({
       isLLMBusy,
       emotion: isLLMBusy ? 'thinking' : 'idle',
     }),
-
-  setLLMResponse: (lastLLMResponse) => set({ lastLLMResponse }),
 }));

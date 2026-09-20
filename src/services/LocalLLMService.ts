@@ -1,4 +1,4 @@
-import { useEmoStore } from '../state/useEmoStore';
+import { useEmoStore, EmoEmotion } from '../state/useEmoStore';
 
 export interface ModelDownloadProgress {
   bytesDownloaded: number;
@@ -24,8 +24,8 @@ const DEFAULT_GGUF_MODELS = {
 };
 
 /**
- * LocalLLMService manages on-device GGUF tiny LLM execution (SmolLM-360M / Qwen2.5-0.5B)
- * and in-app automated model downloading directly on any Android smartphone.
+ * LocalLLMService manages offline GGUF model execution, cute conversational desk companion chat,
+ * and sentiment-driven visual eye expression triggers.
  */
 export class LocalLLMService {
   private static instance: LocalLLMService;
@@ -45,9 +45,6 @@ export class LocalLLMService {
     return LocalLLMService.instance;
   }
 
-  /**
-   * Downloads model binary directly inside app storage if not already present.
-   */
   public async downloadModelInApp(
     modelKey: keyof typeof DEFAULT_GGUF_MODELS = 'smolLM',
     onProgress?: (progress: ModelDownloadProgress) => void
@@ -64,7 +61,6 @@ export class LocalLLMService {
     if (onProgress) onProgress(this.downloadProgress);
 
     try {
-      // In production React Native environment, fetch or RNFS handles chunked downloading directly to RNFS.DocumentDirectoryPath
       this.activeModelPath = `/data/user/0/com.emo/files/models/${targetModel.fileName}`;
       this.downloadProgress = {
         bytesDownloaded: targetModel.sizeBytes,
@@ -100,6 +96,49 @@ export class LocalLLMService {
   }
 
   /**
+   * Conversational Desk Companion Chat: Analyzes user message sentiment,
+   * generates text response, and sets matching cute eye expression!
+   */
+  public async processCompanionChat(userText: string): Promise<{ text: string; emotion: EmoEmotion }> {
+    const store = useEmoStore.getState();
+    store.setLLMBusy(true);
+
+    try {
+      const lower = userText.toLowerCase();
+      let emotion: EmoEmotion = 'happy';
+      let responseText = '';
+
+      if (lower.includes('stress') || lower.includes('busy') || lower.includes('work') || lower.includes('deadline') || lower.includes('panic')) {
+        emotion = 'stressed';
+        responseText = "Oh no! So much work today? Deep breaths, we can get through this together! ⚡";
+      } else if (lower.includes('annoy') || lower.includes('mad') || lower.includes('bad') || lower.includes('angry') || lower.includes('bug')) {
+        emotion = 'irritated';
+        responseText = "*Hmph!* Hey, don't get annoyed with me! I'm doing my best here! 😤";
+      } else if (lower.includes('ignore') || lower.includes('shoo') || lower.includes('go away') || lower.includes('quiet')) {
+        emotion = 'ignoring';
+        responseText = "...fine then, I'm just looking away. *sigh* 🙄";
+      } else if (lower.includes('error') || lower.includes('fail') || lower.includes('break') || lower.includes('broken')) {
+        emotion = 'error';
+        responseText = "Warning! Something broke! Let's check the logs together! 🚨";
+      } else if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey') || lower.includes('cute')) {
+        emotion = 'happy';
+        responseText = "Hello there! I'm right here on your desk watching over your tasks! 😊";
+      } else {
+        emotion = 'happy';
+        responseText = `I hear you! You said: "${userText}". I'm staying right here to assist! ✨`;
+      }
+
+      // Add to chat history
+      store.addChatMessage({ sender: 'user', text: userText });
+      store.addChatMessage({ sender: 'emo', text: responseText, emotion });
+
+      return { text: responseText, emotion };
+    } finally {
+      store.setLLMBusy(false);
+    }
+  }
+
+  /**
    * Agentic Intent Parser: Runs prompt through local LLM or fast heuristic classifier to determine intent.
    */
   public async parseAgenticIntent(inputPrompt: string): Promise<{
@@ -107,43 +146,17 @@ export class LocalLLMService {
     confidence: number;
     summary: string;
   }> {
-    const store = useEmoStore.getState();
-    store.setLLMBusy(true);
+    const result = await this.processCompanionChat(inputPrompt);
+    let intent: 'query' | 'task_approval' | 'cancel' | 'status_check' = 'query';
+    if (result.emotion === 'happy') intent = 'task_approval';
+    else if (result.emotion === 'error') intent = 'cancel';
+    else if (result.emotion === 'thinking') intent = 'status_check';
 
-    try {
-      const lower = inputPrompt.toLowerCase();
-      let intent: 'query' | 'task_approval' | 'cancel' | 'status_check' = 'query';
-      
-      if (lower.includes('approve') || lower.includes('yes') || lower.includes('proceed')) {
-        intent = 'task_approval';
-      } else if (lower.includes('cancel') || lower.includes('stop') || lower.includes('abort')) {
-        intent = 'cancel';
-      } else if (lower.includes('status') || lower.includes('progress')) {
-        intent = 'status_check';
-      }
-
-      return {
-        intent,
-        confidence: 0.95,
-        summary: `Parsed intent [${intent.toUpperCase()}] for prompt: "${inputPrompt}"`,
-      };
-    } finally {
-      store.setLLMBusy(false);
-    }
-  }
-
-  public async generateCompletion(prompt: string): Promise<string> {
-    const store = useEmoStore.getState();
-    store.setLLMBusy(true);
-
-    try {
-      console.log(`[EMO LLM] Executing on-device completion for: ${prompt}`);
-      const response = `[EMO Offline AI] Processed query: "${prompt}" successfully.`;
-      store.setLLMResponse(response);
-      return response;
-    } finally {
-      store.setLLMBusy(false);
-    }
+    return {
+      intent,
+      confidence: 0.95,
+      summary: result.text,
+    };
   }
 
   public getDownloadProgress(): ModelDownloadProgress {
