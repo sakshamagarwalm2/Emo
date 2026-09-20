@@ -82,7 +82,17 @@ interface AgentEventPayload {
 
 ---
 
-## 7. Headless Command-Line Build & Deployment Pipeline
+## 8. Configured Agentic Skills Suite
+
+Project EMO leverages a specialized suite of AI agent skills configured in `C:\Users\SAKSHAM\.gemini\antigravity\skills`:
+1. **[ponytail](file:///C:/Users/SAKSHAM/.gemini/antigravity/skills/ponytail/SKILL.md)**: Enforces code minimalism, YAGNI, native platform priorities, and zero unrequested bloat.
+2. **[react-native-performance](file:///C:/Users/SAKSHAM/.gemini/antigravity/skills/react-native-performance/SKILL.md)**: Enforces 60fps UI thread animation execution, AMOLED burn-in protection, Hermes optimization, and RAM budget limits.
+3. **[mobile-security](file:///C:/Users/SAKSHAM/.gemini/antigravity/skills/mobile-security/SKILL.md)**: Audits secure storage, WebSocket payload validation, permissions, and network boundary rules.
+4. **[adb-device-automation](file:///C:/Users/SAKSHAM/.gemini/antigravity/skills/adb-device-automation/SKILL.md)**: Headless build, ADB APK deployment, Logcat filtering, and stay-on screen controls.
+
+---
+
+## 9. Headless Command-Line Build & Deployment Pipeline
 
 EMO is designed to be fully built and deployed without opening an IDE.
 
