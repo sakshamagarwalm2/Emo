@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/emo_banner.jpg" alt="EMO Banner" width="100%" />
+</p>
+
 # EMO — Minimalist Offline AI Desk Assistant & Agent Monitor
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
