@@ -53,18 +53,31 @@ export const EyeDisplay: React.FC = () => {
         auraColor.value = '#0288D1';
 
         const blinkInterval = setInterval(() => {
-          eyeRy.value = withSequence(
-            withTiming(2, { duration: 80, easing: Easing.quad }),
-            withSpring(42, SPRING_CONFIG)
-          );
+          // Sudden double-blink or quick single blink
+          const isDoubleBlink = Math.random() > 0.75;
+          if (isDoubleBlink) {
+            eyeRy.value = withSequence(
+              withTiming(2, { duration: 70, easing: Easing.quad }),
+              withSpring(42, SPRING_CONFIG),
+              withTiming(2, { duration: 60, easing: Easing.quad }),
+              withSpring(42, SPRING_CONFIG)
+            );
+          } else {
+            eyeRy.value = withSequence(
+              withTiming(2, { duration: 80, easing: Easing.quad }),
+              withSpring(42, SPRING_CONFIG)
+            );
+          }
 
-          if (Math.random() > 0.45) {
-            const randomX = (Math.random() - 0.5) * 26;
-            const randomY = (Math.random() - 0.5) * 12;
+          if (Math.random() > 0.4) {
+            // Sudden spontaneous micro-glance
+            const suddenGlance = Math.random() > 0.7;
+            const randomX = suddenGlance ? (Math.random() > 0.5 ? 24 : -24) : (Math.random() - 0.5) * 26;
+            const randomY = suddenGlance ? -12 : (Math.random() - 0.5) * 12;
             eyeTranslateX.value = withSpring(randomX, SPRING_CONFIG);
             eyeTranslateY.value = withSpring(randomY, SPRING_CONFIG);
           }
-        }, 3500);
+        }, 3400);
 
         return () => clearInterval(blinkInterval);
 
